@@ -182,7 +182,7 @@ export const fieldVisitService = {
       include: [
         {
           model: employeeSchema,
-          foreignKey: "employee_id",
+          as: "employee",
           attributes: ["id", "emp_id", "name", "identity", "mobile", "email", "designations", "department"],
         },
         {
