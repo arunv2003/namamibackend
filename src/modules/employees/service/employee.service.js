@@ -990,17 +990,19 @@ export const employeeService = {
     const employeeResponse = await formatEmployeeAuditWithOffices(employee);
     delete employeeResponse.refreshToken;
 
+    const isProduction = process.env.NODE_ENV === "production";
+
     const options = {
       accessCookieOptions: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "strict",
         maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       },
       refreshCookieOptions: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "strict",
         maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
       },
     };
