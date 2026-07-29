@@ -1,0 +1,217 @@
+import { officeSchema } from "../models/office.models.js";
+import { stateSchema } from "../../state/models/state.model.js";
+import { regionSchema } from "../../state/models/region.model.js";
+import { branchSchema } from "../../state/models/branch.model.js";
+import { employeeSchema } from "../../employees/models/employee.model.js";
+import { ApiError } from "../../../core/utils/api.Errors.js";
+import { generateSlug } from "../../../core/utils/slug.Generate.js";
+import { Op } from "sequelize";
+
+const defaultOfficeIncludes = [
+  {
+    model: stateSchema,
+    as: "state",
+    attributes: ["id", "name", "slug"],
+  },
+  {
+    model: regionSchema,
+    as: "region",
+    attributes: ["id", "name", "slug"],
+  },
+  {
+    model: branchSchema,
+    as: "branch",
+    attributes: ["id", "name", "slug"],
+  },
+  {
+    model: employeeSchema,
+    as: "creator",
+    attributes: ["id", "name", "identity"],
+  },
+  {
+    model: employeeSchema,
+    as: "updater",
+    attributes: ["id", "name", "identity"],
+  },
+];
+
+const formatOfficeAudit = (officeInstance) => {
+  if (!officeInstance) return officeInstance;
+  const item = typeof officeInstance.toJSON === "function" ? officeInstance.toJSON() : { ...officeInstance };
+
+  if (item.state !== undefined) {
+    item.state_id = item.state;
+    delete item.state;
+  }
+  if (item.region !== undefined) {
+    item.region_id = item.region;
+    delete item.region;
+  }
+  if (item.branch !== undefined) {
+    item.branch_id = item.branch;
+    delete item.branch;
+  }
+  if (item.creator !== undefined) {
+    item.createdBy = item.creator;
+    delete item.creator;
+  }
+  if (item.updater !== undefined) {
+    item.updatedBy = item.updater;
+    delete item.updater;
+  }
+  return item;
+};
+
+export const officeService = {
+  createOffice: async (officeData, userId) => {
+    // 1. Check if office with same name already exists
+    const existingName = await officeSchema.findOne({
+      where: { name: officeData.name }
+    });
+    if (existingName) {
+      throw new ApiError(400, `Office with name '${officeData.name}' already exists`);
+    }
+
+    // Generate unique slug
+    let slug = generateSlug(officeData.name);
+    let slugExists = await officeSchema.findOne({ where: { slug } });
+    while (slugExists) {
+      slug = generateSlug(officeData.name);
+      slugExists = await officeSchema.findOne({ where: { slug } });
+    }
+
+    // Save to database
+    const office = await officeSchema.create({
+      ...officeData,
+      slug,
+      createdBy: userId || officeData.createdBy,
+      updatedBy: userId || officeData.updatedBy
+    });
+
+    const createdOffice = await officeSchema.findByPk(office.id, {
+      include: defaultOfficeIncludes
+    });
+
+    return formatOfficeAudit(createdOffice);
+  },
+
+  getOffices: async (queryParams) => {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search 
+    } = queryParams;
+
+    const parsedLimit = parseInt(limit, 10);
+    const parsedPage = parseInt(page, 10);
+    const offset = (parsedPage - 1) * parsedLimit;
+
+    const where = {};
+
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { slug: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows } = await officeSchema.findAndCountAll({
+      where,
+      limit: parsedLimit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      include: defaultOfficeIncludes
+    });
+
+    return {
+      totalItems: count,
+      totalPages: Math.ceil(count / parsedLimit),
+      currentPage: parsedPage,
+      offices: rows.map(formatOfficeAudit)
+    };
+  },
+
+  getOfficeBySlug: async (slug) => {
+    let office;
+    const isId = !isNaN(slug) && !isNaN(parseFloat(slug));
+
+    if (isId) {
+      office = await officeSchema.findByPk(slug, {
+        include: defaultOfficeIncludes
+      });
+    } else {
+      office = await officeSchema.findOne({
+        where: { slug },
+        include: defaultOfficeIncludes
+      });
+    }
+
+    if (!office) {
+      throw new ApiError(404, `Office with identifier '${slug}' not found`);
+    }
+
+    return formatOfficeAudit(office);
+  },
+
+  updateOffice: async (slug, updateData, userId) => {
+    let office;
+    const isId = !isNaN(slug) && !isNaN(parseFloat(slug));
+
+    if (isId) {
+      office = await officeSchema.findByPk(slug);
+    } else {
+      office = await officeSchema.findOne({ where: { slug } });
+    }
+
+    if (!office) {
+      throw new ApiError(404, `Office with identifier '${slug}' not found`);
+    }
+
+    delete updateData.slug;
+    const id = office.id;
+
+    // If name is updating, check for name conflict
+    if (updateData.name && updateData.name !== office.name) {
+      const nameExists = await officeSchema.findOne({
+        where: {
+          name: updateData.name,
+          id: { [Op.ne]: id }
+        }
+      });
+      if (nameExists) {
+        throw new ApiError(400, `Office with name '${updateData.name}' already exists`);
+      }
+    }
+
+    if (userId) {
+      updateData.updatedBy = userId;
+    }
+
+    await office.update(updateData);
+
+    const updatedOffice = await officeSchema.findByPk(id, {
+      include: defaultOfficeIncludes
+    });
+    return formatOfficeAudit(updatedOffice);
+  },
+
+  deleteOffice: async (slug) => {
+    let office;
+    const isId = !isNaN(slug) && !isNaN(parseFloat(slug));
+
+    if (isId) {
+      office = await officeSchema.findByPk(slug);
+    } else {
+      office = await officeSchema.findOne({ where: { slug } });
+    }
+
+    if (!office) {
+      throw new ApiError(404, `Office with identifier '${slug}' not found`);
+    }
+
+    await office.destroy();
+    return true;
+  }
+};
+
+export default officeService;
