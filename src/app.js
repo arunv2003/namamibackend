@@ -28,26 +28,38 @@ app.use(
 );
 
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+  ? process.env.CORS_ORIGIN.replace(/[\r\n]/g, '').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean)
   : [];
 
 const corsOptions = {
   origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    const cleanOrigin = origin.replace(/\/$/, '');
     if (
-      !origin ||
       allowedOrigins.includes('*') ||
-      allowedOrigins.includes(origin) ||
+      allowedOrigins.includes(cleanOrigin) ||
       process.env.NODE_ENV === 'development'
     ) {
-      callback(null, true);
-    } else {
-      callback(new ApiError(403, 'Not allowed by CORS security policy.'));
+      return callback(null, true);
     }
+    console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Headers',
+  ],
+  optionsSuccessStatus: 200,
 };
+
 app.use(cors(corsOptions));
 
 app.use(globalLimiter);

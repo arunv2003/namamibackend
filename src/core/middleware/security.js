@@ -9,6 +9,7 @@ export const globalLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10), // Default: 100 requests per IP per window
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     status: 429,
     message: 'Too many requests from this IP, please try again later.',
@@ -23,6 +24,7 @@ export const authLimiter = rateLimit({
   max: 15, // Limit each IP to 15 authentication requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     status: 429,
     message: 'Too many authentication attempts. Please try again after 15 minutes.',
