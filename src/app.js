@@ -28,7 +28,7 @@ app.use(
 );
 
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim().replace(/\/$/, ''))
+  ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
   : [];
 
 const corsOptions = {
