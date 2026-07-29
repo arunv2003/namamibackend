@@ -990,19 +990,22 @@ export const employeeService = {
     const employeeResponse = await formatEmployeeAuditWithOffices(employee);
     delete employeeResponse.refreshToken;
 
-    const isProduction = process.env.NODE_ENV === "production";
+    const isProduction =
+      process.env.NODE_ENV?.toLowerCase() === "production" ||
+      Boolean(process.env.VERCEL) ||
+      Boolean(process.env.RENDER);
 
     const options = {
       accessCookieOptions: {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "none" : "strict",
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       },
       refreshCookieOptions: {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? "none" : "strict",
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days
       },
     };
@@ -1032,17 +1035,22 @@ export const employeeService = {
 
     console.log(data);
 
+    const isProduction =
+      process.env.NODE_ENV?.toLowerCase() === "production" ||
+      Boolean(process.env.VERCEL) ||
+      Boolean(process.env.RENDER);
+
     const options = {
       accessCookieOptions: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 0, // Expire the cookie
       },
       refreshCookieOptions: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 0, // Expire the cookie
       },
     };

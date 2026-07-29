@@ -41,7 +41,7 @@ export const generateAccessAndRefreshTokens = (employee) => {
     accessTokenSecret,
     {
       algorithm: 'HS256',
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRY || process.env.JWT_EXPIRE || '15m',
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY || process.env.JWT_EXPIRE || '1d',
       issuer: process.env.JWT_ISSUER || 'satya-collection-api',
       audience: process.env.JWT_AUDIENCE || 'satya-collection-client',
     }
