@@ -68,6 +68,14 @@ app.use(express.static(uploadsDir));
 
 app.use('/api/v1', apiRouter);
 
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Namami Backend API is running',
+    version: '1.0.0',
+  });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
