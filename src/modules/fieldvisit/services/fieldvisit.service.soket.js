@@ -11,7 +11,7 @@ const defaultIncludes = [
 ];
 
 export const processSocketLocationUpdate = async (payload) => {
-  const { emp_id, latitude, longitude, time, date, purpose, remark ,customerId } = payload || {};
+  const { emp_id, latitude, longitude, time, date, purpose, remark, customerId } = payload || {};
 
   if (!emp_id) {
     throw new Error("emp_id is required for socket location update");

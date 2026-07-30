@@ -128,3 +128,19 @@ export const logoutEmployee = asyncHandler(async (req, res) => {
       )
     );
 });
+
+export const getMyTeamEmployees = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const result = await employeeService.myteamEmployee(userId);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "My team hierarchy retrieved successfully"));
+});
+
+export const getProfileData = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const result = await employeeService.getProfileData(userId);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Profile retrieved successfully"));
+});

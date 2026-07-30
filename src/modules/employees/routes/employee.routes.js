@@ -10,6 +10,8 @@ import {
   loginEmployee,
   logoutEmployee,
   getPermissionByRole,
+  getMyTeamEmployees,
+  getProfileData,
 } from "../controllers/employee.controller.js";
 import { authMiddleware } from "../../../core/middleware/auth.middleware.js";
 import { authLimiter } from "../../../core/middleware/security.js";
@@ -21,9 +23,11 @@ router.route("/create").post(authMiddleware, createEmployee);
 router.route("/create-form").get(authMiddleware, getEmployeeFields);
 router.route("/get-all").get(authMiddleware, getEmployees);
 router.route("/contact-with-customer").get(authMiddleware, getEmployeeContactWithCustomer);
+router.route("/my-team").get(authMiddleware, getMyTeamEmployees);
 router.route("/logout").post(authMiddleware, logoutEmployee);
 router.route("/login").post(authLimiter, loginEmployee);
 router.route("/get-permission").get(authMiddleware, getPermissionByRole);
+router.route('/profile').get(authMiddleware, getProfileData)
 router.route("/get/:slug").get(authMiddleware, getEmployeeBySlug);
 router.route("/update/:slug").put(authMiddleware, updateEmployee);
 router.route("/delete/:slug").delete(authMiddleware, deleteEmployee);

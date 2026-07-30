@@ -161,20 +161,20 @@ export const completeBehalfEmployeeService = {
 
     // 2. Mark current task as completed.
     // All form fields are now direct columns in the task schema.
-    currentTask.status        = "completed";
-    currentTask.updatedBy     = userId || currentTask.updatedBy;
-    currentTask.houseImage    = formData.houseImage || null;
-    currentTask.relation      = formData.relation || null;
-    currentTask.clientPhone   = formData.clientPhone || null;
+    currentTask.status = "completed";
+    currentTask.updatedBy = userId || currentTask.updatedBy;
+    currentTask.houseImage = formData.houseImage || null;
+    currentTask.relation = formData.relation || null;
+    currentTask.clientPhone = formData.clientPhone || null;
     currentTask.collectPayment = formData.collectPayment || null;
-    currentTask.reason        = formData.reason || null;
+    currentTask.reason = formData.reason || null;
     currentTask.clientSegment = formData.clientSegment || null;
-    currentTask.ptpdate       = cleanDate(formData.ptpdate);
-    currentTask.paymentType   = formData.paymentType || null;
+    currentTask.ptpdate = cleanDate(formData.ptpdate);
+    currentTask.paymentType = formData.paymentType || null;
     currentTask.paymentAmount = cleanNum(formData.paymentAmount);
-    currentTask.remark        = formData.remark || null;
+    currentTask.remark = formData.remark || null;
     currentTask.paymentProfImage = formData.paymentProfImage || null;
-    currentTask.location      = formData.location || null;
+    currentTask.location = formData.location || null;
     currentTask.startDateTime = cleanDate(formData.startDateTime) || currentTask.startDateTime;
     currentTask.completeDateTime = cleanDate(formData.completeDateTime);
     await currentTask.save();
@@ -217,18 +217,18 @@ export const completeBehalfEmployeeService = {
         createdBy: userId || currentTask.createdBy,
         updatedBy: userId || currentTask.updatedBy,
         // Completion form fields carried over to the new task
-        houseImage:      formData.houseImage || null,
-        relation:        formData.relation || null,
-        clientPhone:     formData.clientPhone || null,
-        collectPayment:  formData.collectPayment || null,
-        reason:          formData.reason || null,
-        clientSegment:   formData.clientSegment || null,
-        ptpdate:         cleanDate(formData.ptpdate),
-        paymentType:     formData.paymentType || null,
-        paymentAmount:   cleanNum(formData.paymentAmount),
-        remark:          formData.remark || null,
+        houseImage: formData.houseImage || null,
+        relation: formData.relation || null,
+        clientPhone: formData.clientPhone || null,
+        collectPayment: formData.collectPayment || null,
+        reason: formData.reason || null,
+        clientSegment: formData.clientSegment || null,
+        ptpdate: cleanDate(formData.ptpdate),
+        paymentType: formData.paymentType || null,
+        paymentAmount: cleanNum(formData.paymentAmount),
+        remark: formData.remark || null,
         paymentProfImage: formData.paymentProfImage || null,
-        location:        formData.location || null,
+        location: formData.location || null,
         completeDateTime: cleanDate(formData.completeDateTime),
         // Metadata about the previous task
         additionalFields: {

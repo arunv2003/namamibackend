@@ -16,7 +16,7 @@ export const handleFieldVisitSockets = (io, socket) => {
 
   // Event: Mobile / Employee app sends location update
   socket.on("fieldVisit:addLocation", async (payload, ackCallback) => {
-    console.log(payload,"payloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayload")
+    console.log(payload, "payloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayloadpayload")
     try {
       if (!payload || payload.latitude === undefined || payload.longitude === undefined) {
         const errorResponse = { success: false, message: "latitude and longitude are required" };

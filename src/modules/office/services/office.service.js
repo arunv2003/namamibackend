@@ -39,25 +39,29 @@ const formatOfficeAudit = (officeInstance) => {
   if (!officeInstance) return officeInstance;
   const item = typeof officeInstance.toJSON === "function" ? officeInstance.toJSON() : { ...officeInstance };
 
-  if (item.state !== undefined) {
-    item.state_id = item.state;
-    delete item.state;
+  if (item.state && typeof item.state === "object") {
+    item.state_name = item.state.name;
+    if (typeof item.state_id === "object") {
+      item.state_id = item.state.id;
+    }
   }
-  if (item.region !== undefined) {
-    item.region_id = item.region;
-    delete item.region;
+  if (item.region && typeof item.region === "object") {
+    item.region_name = item.region.name;
+    if (typeof item.region_id === "object") {
+      item.region_id = item.region.id;
+    }
   }
-  if (item.branch !== undefined) {
-    item.branch_id = item.branch;
-    delete item.branch;
+  if (item.branch && typeof item.branch === "object") {
+    item.branch_name = item.branch.name;
+    if (typeof item.branch_id === "object") {
+      item.branch_id = item.branch.id;
+    }
   }
   if (item.creator !== undefined) {
     item.createdBy = item.creator;
-    delete item.creator;
   }
   if (item.updater !== undefined) {
     item.updatedBy = item.updater;
-    delete item.updater;
   }
   return item;
 };

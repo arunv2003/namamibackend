@@ -75,6 +75,10 @@ export const createEmployeeSchema = z.object({
     (val) => (val === "" || val === null || val === undefined || isNaN(Number(val)) ? 1 : Number(val)),
     z.number().int().nonnegative("Branch ID must be a non-negative integer")
   ),
+  gender: z.string().optional().nullable(),
+  blood_group: z.string().optional().nullable(),
+  label_color: z.string().optional().nullable(),
+  team: z.string().optional().nullable(),
   password: z.preprocess(
     (val) => (val === "" || val === null || val === undefined ? "123456" : String(val)),
     z.string().min(6, "Password must be at least 6 characters").optional().nullable()
@@ -83,6 +87,10 @@ export const createEmployeeSchema = z.object({
 
 export const updateEmployeeSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  gender: z.string().optional().nullable(),
+  blood_group: z.string().optional().nullable(),
+  label_color: z.string().optional().nullable(),
+  team: z.string().optional().nullable(),
   manager_id: z.preprocess(
     (val) => (val === "" || val === null || val === undefined || isNaN(Number(val)) ? undefined : Number(val)),
     z.number().int().nonnegative("Manager ID must be a non-negative integer").optional().nullable()

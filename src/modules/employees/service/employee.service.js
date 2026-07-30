@@ -12,6 +12,7 @@ import { generateSlug } from "../../../core/utils/slug.Generate.js";
 import { generateUniqueId } from "../../../core/utils/generateUniqueId.js";
 import bcrypt from "bcrypt";
 import { generateAccessAndRefreshTokens } from "../../../core/utils/token.Generate.js";
+import { saveImageToDisk } from "../../../core/utils/fileUpload.js";
 import { Op } from "sequelize";
 import countryCodes from "country-codes-list";
 
@@ -582,8 +583,6 @@ export const employeeService = {
 
 
   createEmployee: async (employeeData, userId) => {
-
-
     const existingEmail = await employeeSchema.findOne({
       where: { email: employeeData.email }
     });
@@ -630,12 +629,17 @@ export const employeeService = {
     const finalExitAlerts = Array.isArray(exitAlertsVal) ? exitAlertsVal : (exitAlertsVal ? [exitAlertsVal] : []);
 
     const countryCodeVal = employeeData.country_code || employeeData.mobileCountryCode || "+91";
-    const imageVal = employeeData.image || employeeData.thumbnail || null;
+    const rawImage = employeeData.image || employeeData.thumbnail || null;
+    const imageVal = rawImage ? saveImageToDisk(rawImage, null, "employee") : null;
+    const genderVal = employeeData.gender ? employeeData.gender.toLowerCase() : undefined;
 
     const employee = await employeeSchema.create({
       ...employeeData,
       country_code: countryCodeVal,
       image: imageVal,
+      blood_group: employeeData.blood_group || null,
+      label_color: employeeData.label_color || null,
+      ...(genderVal && { gender: genderVal }),
       punchIn: finalPunchIn,
       punchOut: finalPunchOut,
       entryAlerts: finalEntryAlerts,
@@ -655,7 +659,6 @@ export const employeeService = {
     // 5. Return employee data excluding password with formatted references
     return await formatEmployeeAuditWithOffices(createdEmployee);
   },
-
 
   getEmployees: async (queryParams, user) => {
     const {
@@ -821,8 +824,6 @@ export const employeeService = {
     };
   },
 
-
-
   getEmployeeBySlug: async (slug) => {
     let employee;
 
@@ -848,7 +849,6 @@ export const employeeService = {
 
     return await formatEmployeeAuditWithOffices(employee);
   },
-
 
   updateEmployee: async (slug, updateData, userId) => {
     let employee;
@@ -908,6 +908,13 @@ export const employeeService = {
     if (updateData.thumbnail && !updateData.image) {
       updateData.image = updateData.thumbnail;
     }
+    if (updateData.image) {
+      updateData.image = saveImageToDisk(updateData.image, null, "employee");
+    }
+
+    if (updateData.gender) {
+      updateData.gender = updateData.gender.toLowerCase();
+    }
 
     if (updateData.punchInGeoFence !== undefined || updateData.punchIn !== undefined) {
       const val = updateData.punchInGeoFence ?? updateData.punchIn;
@@ -940,7 +947,6 @@ export const employeeService = {
     return await formatEmployeeAuditWithOffices(updatedEmployee);
   },
 
-
   deleteEmployee: async (slug) => {
     let employee;
     const isId = !isNaN(slug) && !isNaN(parseFloat(slug));
@@ -958,7 +964,6 @@ export const employeeService = {
     await employee.destroy();
     return true;
   },
-
 
   loginEmployee: async ({ email, mobile, password }) => {
     const where = {};
@@ -1056,7 +1061,92 @@ export const employeeService = {
     };
 
     return { options };
+  },
+
+  myteamEmployee: async (userOrId) => {
+    const userId =
+      typeof userOrId === "object" && userOrId !== null
+        ? userOrId.id || userOrId.userId || (userOrId.user && userOrId.user.id)
+        : userOrId;
+
+    if (!userId) {
+      throw new ApiError(400, "User ID is required");
+    }
+
+    // 1. Fetch current employee to get manager_id
+    const currentEmp = await employeeSchema.findByPk(userId);
+    if (!currentEmp) {
+      throw new ApiError(404, "Employee not found");
+    }
+
+    // 2. Get manager_id; if null, match with id itself
+    const targetManagerId = currentEmp.manager_id ? currentEmp.manager_id : currentEmp.id;
+
+    // 3. Fetch all employees to construct the hierarchy tree
+    const rawEmployees = await employeeSchema.findAll();
+    const allEmployees = rawEmployees.map((emp) => emp.get({ plain: true }));
+
+    // 4. Create employee lookup map with empty children/subordinates array
+    const employeeMap = {};
+    allEmployees.forEach((emp) => {
+      const node = {
+        ...emp,
+        children: [],
+      };
+      // Aliases for component/consumer flexibility
+      node.team = node.children;
+      node.employees = node.children;
+      node.subordinates = node.children;
+      employeeMap[emp.id] = node;
+    });
+
+    // 5. Build hierarchy by adding each employee under their manager_id & attach manager details
+    allEmployees.forEach((emp) => {
+      const node = employeeMap[emp.id];
+      if (emp.manager_id && employeeMap[emp.manager_id]) {
+        const mgr = employeeMap[emp.manager_id];
+        const managerDetails = {
+          id: mgr.id,
+          name: mgr.name,
+          phoneNo: mgr.mobile || mgr.phone || mgr.phoneNo || null,
+          mobile: mgr.mobile || mgr.phone || mgr.phoneNo || null,
+          email: mgr.email || null,
+          image: mgr.image || mgr.avatar || null,
+          emp_id: mgr.emp_id || mgr.employee_id || mgr.identity || null,
+        };
+        node.manager_id = managerDetails;
+        node.manager = managerDetails;
+        node.manager_name = mgr.name;
+
+        if (emp.id !== emp.manager_id) {
+          employeeMap[emp.manager_id].children.push(node);
+        }
+      } else {
+        node.manager = null;
+        node.manager_name = "N/A";
+      }
+    });
+
+    // 6. Return manager object containing nested employee tree
+    if (employeeMap[targetManagerId]) {
+      return employeeMap[targetManagerId];
+    }
+
+    return allEmployees
+      .filter((emp) => emp.manager_id === targetManagerId)
+      .map((emp) => employeeMap[emp.id]);
+  },
+
+  getProfileData: async (userId) => {
+    const user = await employeeSchema.findByPk(userId, {
+      include: getDefaultEmployeeIncludes(),
+    });
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+    return formatEmployeeAudit(user);
   }
+
 };
 
 export default employeeService;
