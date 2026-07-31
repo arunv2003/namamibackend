@@ -15,7 +15,9 @@ export const createBranch = asyncHandler(async (req, res) => {
 });
 
 export const getBranches = asyncHandler(async (req, res) => {
-  const result = await branchService.getBranches(req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await branchService.getBranches(req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Branches retrieved successfully"));
@@ -28,7 +30,9 @@ export const getBranchBySlug = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, branch, "Branch retrieved successfully"));
 });
 export const getBranchByRegionId = asyncHandler(async (req, res) => {
-  const result = await branchService.getBranchByRegionId(req.params.regionId, req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await branchService.getBranchByRegionId(req.params.regionId, req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Branch retrieved successfully"));

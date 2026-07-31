@@ -7,6 +7,13 @@ import { ApiError } from "../../../core/utils/api.Errors.js";
 import { Op } from "sequelize";
 import { generateSlug } from "../../../core/utils/slug.Generate.js";
 import { generateUniqueId } from "../../../core/utils/generateUniqueId.js";
+import {
+  buildViewPermissionCondition,
+  canAdd,
+  canUpdate,
+  canDelete,
+  canGet,
+} from "../../../core/utils/permission.utils.js";
 
 const includeOptions = [
   {
@@ -414,28 +421,40 @@ export const customerService = {
       center,
     } = queryParams;
 
-
     const isAll = limit === "all" || limit === "0" || limit === 0;
     const parsedLimit = isAll ? null : parseInt(limit, 10);
     const parsedPage = parseInt(page, 10) || 1;
     const offset = isAll ? 0 : (parsedPage - 1) * (parsedLimit || 10);
 
-    const role = roleId ? await RoleSchema.findByPk(roleId) : null;
-    const isAdmin =
-      role &&
-      (role.slug?.toLowerCase() === "admin" ||
-        role.name?.toLowerCase() === "admin");
-
     const where = {};
+    const andConditions = [];
+
+    if (roleId) {
+      const role = await RoleSchema.findByPk(roleId);
+      const viewCondition = buildViewPermissionCondition(
+        role,
+        "customer",
+        null,
+        userId,
+        ["createdBy", "owner"]
+      );
+      if (viewCondition) {
+        andConditions.push(viewCondition);
+      }
+    } else if (userId) {
+      andConditions.push({ createdBy: userId });
+    }
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { phone: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
-        { loanNo: { [Op.like]: `%${search}%` } },
-        { oldLoanNo: { [Op.like]: `%${search}%` } },
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { phone: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { loanNo: { [Op.like]: `%${search}%` } },
+          { oldLoanNo: { [Op.like]: `%${search}%` } },
+        ],
+      });
     }
 
     if (loanStatus) {
@@ -450,8 +469,8 @@ export const customerService = {
       where.center = center;
     }
 
-    if (!isAdmin) {
-      where.createdBy = userId;
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
     }
 
     const queryOptions = {

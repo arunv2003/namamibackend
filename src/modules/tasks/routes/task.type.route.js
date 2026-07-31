@@ -7,13 +7,14 @@ import {
   deleteTaskType,
 } from "../controllers/task.type.controller.js";
 import { authMiddleware } from "../../../core/middleware/auth.middleware.js";
+import { checkPermission } from "../../../core/utils/permission.utils.js";
 
 const router = express.Router();
 
-router.route("/create").post(authMiddleware, createTaskType);
-router.route("/get-all").get(authMiddleware, getAllTaskTypes);
-router.route("/get/:slug").get(authMiddleware, getTaskTypeBySlug);
-router.route("/update/:slug").put(authMiddleware, updateTaskType);
-router.route("/delete/:slug").delete(authMiddleware, deleteTaskType);
+router.route("/create").post(authMiddleware, checkPermission("tasktype", "add"), createTaskType);
+router.route("/get-all").get(authMiddleware, checkPermission("tasktype", "get"), getAllTaskTypes);
+router.route("/get/:slug").get(authMiddleware, checkPermission("tasktype", "get"), getTaskTypeBySlug);
+router.route("/update/:slug").put(authMiddleware, checkPermission("tasktype", "edit"), updateTaskType);
+router.route("/delete/:slug").delete(authMiddleware, checkPermission("tasktype", "delete"), deleteTaskType);
 
 export default router;

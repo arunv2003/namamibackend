@@ -94,7 +94,6 @@ export const getCustomerTasks = asyncHandler(async (req, res) => {
 export const getEmployeeTasks = asyncHandler(async (req, res) => {
   const employeeId = req.query.employeeId || req.params.employeeId || req.user?.id || req.user?.emp_id;
 
-  console.log(employeeId, "employeeId received in getEmployeeTasks controller");
   if (!employeeId) {
     throw new ApiError(400, "Employee ID is required");
   }
@@ -104,4 +103,12 @@ export const getEmployeeTasks = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Employee tasks retrieved successfully"));
+});
+
+export const getTeamTask = asyncHandler(async (req, res) => {
+  const employeeId = req.user.id || req.user?.emp_id;
+  const result = await taskService.getTeamTask(employeeId);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, "Team tasks retrieved successfully"));
 });

@@ -21,7 +21,7 @@ export const getCustomersForm = asyncHandler(async (req, res) => {
 });
 
 export const createCustomer = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user?.id;
   const data = createCustomerSchema.parse(req.body);
   const customer = await customerService.createCustomer(data, userId);
   return res
@@ -30,8 +30,8 @@ export const createCustomer = asyncHandler(async (req, res) => {
 });
 
 export const getCustomers = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
-  const roleId = req.user.type || req.roleId;
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
   const result = await customerService.getCustomers(req.query, userId, roleId);
   return res
     .status(200)
@@ -49,12 +49,8 @@ export const getCustomerBySlug = asyncHandler(async (req, res) => {
 export const updateCustomer = asyncHandler(async (req, res) => {
   const { slug } = req.params;
   const data = updateCustomerSchema.parse(req.body);
-  const userId = req.user.id;
-  const updatedCustomer = await customerService.updateCustomer(
-    slug,
-    data,
-    userId,
-  );
+  const userId = req.user?.id;
+  const updatedCustomer = await customerService.updateCustomer(slug, data, userId);
   return res
     .status(200)
     .json(

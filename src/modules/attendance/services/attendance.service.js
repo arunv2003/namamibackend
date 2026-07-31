@@ -478,42 +478,59 @@ export const attendanceService = {
     });
 
     if (!allEmployees || allEmployees.length === 0) {
-      return { date: dateStr, markedCount: 0, message: "No active employees found" };
+      return { date: dateStr, markedAbsentCount: 0, markedHalfDayCount: 0, message: "No active employees found" };
     }
 
     const existingRecords = await attendanceSchema.findAll({
       where: { date: dateStr },
-      attributes: ["employee_id"],
     });
 
+    // 1. Process unclosed punch-ins (Employees who clocked in but didn't clock out)
+    const unclosedRecords = existingRecords.filter(
+      (r) => r.clock_in && !r.clock_out
+    );
+
+    let halfDayCount = 0;
+    for (const record of unclosedRecords) {
+      const updatedRemarks = record.remarks
+        ? record.remarks.includes("Auto-marked HALF_DAY")
+          ? record.remarks
+          : `${record.remarks} | Auto-marked HALF_DAY (No punch-out recorded)`
+        : "Auto-marked HALF_DAY (No punch-out recorded)";
+
+      await record.update({
+        status: "HALF_DAY",
+        clock_out: null,
+        remarks: updatedRemarks,
+      });
+      halfDayCount++;
+    }
+
+    // 2. Process missing employees (Employees who didn't clock in at all)
     const attendedEmpIds = new Set(existingRecords.map((r) => r.employee_id));
     const missingEmployees = allEmployees.filter((emp) => !attendedEmpIds.has(emp.id));
 
-    if (missingEmployees.length === 0) {
-      return {
+    let absentCount = 0;
+    if (missingEmployees.length > 0) {
+      const absentRecords = missingEmployees.map((emp) => ({
+        employee_id: emp.id,
         date: dateStr,
-        markedCount: 0,
-        message: "All employees have attendance records for this date",
-      };
+        clock_in: null,
+        clock_out: null,
+        status: "ABSENT",
+        total_hours: 0,
+        remarks: "Auto-marked ABSENT (No clock-in recorded)",
+      }));
+
+      await attendanceSchema.bulkCreate(absentRecords);
+      absentCount = absentRecords.length;
     }
-
-    const absentRecords = missingEmployees.map((emp) => ({
-      employee_id: emp.id,
-      date: dateStr,
-      clock_in: null,
-      clock_out: null,
-      status: "ABSENT",
-      total_hours: 0,
-      remarks: "Auto-marked ABSENT (No clock-in recorded)",
-    }));
-
-    await attendanceSchema.bulkCreate(absentRecords);
 
     return {
       date: dateStr,
-      markedCount: absentRecords.length,
-      absentEmployeeIds: missingEmployees.map((e) => e.id),
-      message: `Successfully marked ${absentRecords.length} employees as ABSENT for ${dateStr}`,
+      markedAbsentCount: absentCount,
+      markedHalfDayCount: halfDayCount,
+      message: `Daily attendance background task completed for ${dateStr}: ${absentCount} marked ABSENT, ${halfDayCount} marked HALF_DAY (missing punch-out).`,
     };
   },
 

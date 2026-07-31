@@ -10,9 +10,13 @@ export const globalLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   skip: (req) => req.method === 'OPTIONS',
-  message: {
-    status: 429,
-    message: 'Too many requests from this IP, please try again later.',
+  handler: (req, res) => {
+    return res.status(429).json({
+      statusCode: 429,
+      success: false,
+      data: null,
+      message: 'Too many requests. Please wait a few moments and try again.',
+    });
   },
 });
 
@@ -21,13 +25,17 @@ export const globalLimiter = rateLimit({
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Limit each IP to 15 authentication requests per 15 minutes
+  max: 5, // Limit each IP to 5 authentication requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => req.method === 'OPTIONS',
-  message: {
-    status: 429,
-    message: 'Too many authentication attempts. Please try again after 15 minutes.',
+  handler: (req, res) => {
+    return res.status(429).json({
+      statusCode: 429,
+      success: false,
+      data: null,
+      message: 'Too many authentication attempts. Please try again after 15 minutes.',
+    });
   },
 });
 

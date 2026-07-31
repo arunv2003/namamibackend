@@ -14,14 +14,14 @@ export const initAttendanceCron = () => {
       const hours = now.getHours();
       const minutes = now.getMinutes();
 
-      // Trigger auto-absent marking between 23:45 and 23:59
+      // Trigger auto-absent & half-day marking between 23:45 and 23:59
       if (hours === 23 && minutes >= 45) {
-        console.log("⏰ [ATTENDANCE CRON] Running daily absentee auto-marking task...");
+        console.log("⏰ [ATTENDANCE CRON] Running daily absentee & unclosed punch auto-marking task...");
         const result = await attendanceService.markDailyAbsentees();
         console.log("⏰ [ATTENDANCE CRON] Result:", result.message);
       }
     } catch (err) {
-      console.error("❌ [ATTENDANCE CRON] Error in absentee auto-marking cron job:", err.message);
+      console.error("❌ [ATTENDANCE CRON] Error in attendance auto-marking cron job:", err.message);
     }
   }, 15 * 60 * 1000);
 };

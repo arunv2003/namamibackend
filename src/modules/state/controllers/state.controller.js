@@ -15,7 +15,9 @@ export const createState = asyncHandler(async (req, res) => {
 });
 
 export const getStates = asyncHandler(async (req, res) => {
-  const result = await stateService.getStates(req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await stateService.getStates(req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "States retrieved successfully"));

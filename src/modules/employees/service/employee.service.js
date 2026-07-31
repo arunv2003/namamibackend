@@ -15,6 +15,13 @@ import { generateAccessAndRefreshTokens } from "../../../core/utils/token.Genera
 import { saveImageToDisk } from "../../../core/utils/fileUpload.js";
 import { Op } from "sequelize";
 import countryCodes from "country-codes-list";
+import {
+  buildViewPermissionCondition,
+  canAdd,
+  canUpdate,
+  canDelete,
+  canGet,
+} from "../../../core/utils/permission.utils.js";
 
 const getCountryFlagEmoji = (countryCode) => {
   if (!countryCode || countryCode.length !== 2) return "";
@@ -679,15 +686,39 @@ export const employeeService = {
     const offset = (parsedPage - 1) * parsedLimit;
 
     const where = {};
+    const andConditions = [];
+
+    if (role) {
+      if (!canGet(role, "employee", "allEmployee")) {
+        throw new ApiError(
+          403,
+          "Access Forbidden: You do not have permission to view employees"
+        );
+      }
+      const viewCondition = buildViewPermissionCondition(
+        role,
+        "employee",
+        "allEmployee",
+        user?.id,
+        ["createdBy", "id"]
+      );
+      if (viewCondition) {
+        andConditions.push(viewCondition);
+      }
+    } else if (user?.id) {
+      andConditions.push({ createdBy: user.id });
+    }
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
-        { mobile: { [Op.like]: `%${search}%` } },
-        { identity: { [Op.like]: `%${search}%` } },
-        { slug: { [Op.like]: `%${search}%` } }
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { mobile: { [Op.like]: `%${search}%` } },
+          { identity: { [Op.like]: `%${search}%` } },
+          { slug: { [Op.like]: `%${search}%` } }
+        ]
+      });
     }
 
     if (department) {
@@ -698,20 +729,16 @@ export const employeeService = {
       where.status = status;
     }
 
-
-
-    if (role && role.slug !== "admin" && role.name !== "admin") {
-      if (user?.id) {
-        where.createdBy = user.id;
-      }
-    }
-
     if (role_id || type) {
       where.type = parseInt(role_id || type, 10);
     }
 
     if (branch_id) {
       where.branch_id = parseInt(branch_id, 10);
+    }
+
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
     }
 
     const { count, rows } = await employeeSchema.findAndCountAll({
@@ -725,8 +752,6 @@ export const employeeService = {
     });
 
     const formattedEmployees = await formatEmployeesAuditWithOffices(rows);
-
-    // console.log(formattedEmployees, "formattedEmployeesformattedEmployeesformattedEmployees")
 
     return {
       totalItems: count,
@@ -750,20 +775,49 @@ export const employeeService = {
     const parsedPage = parseInt(page, 10) || 1;
     const offset = isAll ? 0 : (parsedPage - 1) * (parsedLimit || 10);
 
+    const roleId = user?.type || user?.role_id;
+    const role = roleId ? await RoleSchema.findByPk(roleId) : null;
+
     const where = {};
+    const andConditions = [];
+
+    if (role) {
+      if (!canGet(role, "employee", "allEmployee")) {
+        throw new ApiError(
+          403,
+          "Access Forbidden: You do not have permission to view employee contacts"
+        );
+      }
+      const viewCondition = buildViewPermissionCondition(
+        role,
+        "employee",
+        "allEmployee",
+        user?.id,
+        ["createdBy", "id"]
+      );
+      if (viewCondition) {
+        andConditions.push(viewCondition);
+      }
+    }
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
-        { mobile: { [Op.like]: `%${search}%` } },
-        { identity: { [Op.like]: `%${search}%` } },
-        { emp_id: { [Op.like]: `%${search}%` } },
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { mobile: { [Op.like]: `%${search}%` } },
+          { identity: { [Op.like]: `%${search}%` } },
+          { emp_id: { [Op.like]: `%${search}%` } },
+        ]
+      });
     }
 
     if (status) {
       where.status = status;
+    }
+
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
     }
 
     const isRequired = onlyWithCustomer === "true" || onlyWithCustomer === true;
@@ -833,7 +887,7 @@ export const employeeService = {
     if (isId) {
       employee = await employeeSchema.findByPk(slug, {
         attributes: { exclude: ['password'] },
-        include: defaultEmployeeIncludes
+        include: getDefaultEmployeeIncludes()
       });
     } else {
       employee = await employeeSchema.findOne({
@@ -1064,6 +1118,7 @@ export const employeeService = {
   },
 
   myteamEmployee: async (userOrId) => {
+
     const userId =
       typeof userOrId === "object" && userOrId !== null
         ? userOrId.id || userOrId.userId || (userOrId.user && userOrId.user.id)

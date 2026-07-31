@@ -16,7 +16,9 @@ export const createOffice = asyncHandler(async (req, res) => {
 });
 
 export const getOffices = asyncHandler(async (req, res) => {
-  const result = await officeService.getOffices(req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await officeService.getOffices(req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Offices retrieved successfully"));

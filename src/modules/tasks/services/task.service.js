@@ -9,6 +9,12 @@ import { ApiError } from "../../../core/utils/api.Errors.js";
 import { Op } from "sequelize";
 import { generateSlug } from "../../../core/utils/slug.Generate.js";
 import { generateUniqueId } from "../../../core/utils/generateUniqueId.js";
+import {
+  buildViewPermissionCondition,
+  canAdd,
+  canUpdate,
+  canDelete,
+} from "../../../core/utils/permission.utils.js";
 
 const includeOptions = [
   {
@@ -291,7 +297,7 @@ export const taskService = {
     const parsedLimit = parseInt(limit, 10);
     const parsedPage = parseInt(page, 10);
     const offset = (parsedPage - 1) * parsedLimit;
-    const role = await RoleSchema.findByPk(roleId);
+    const role = roleId ? await RoleSchema.findByPk(roleId) : null;
 
     const where = {};
     const andConditions = [];
@@ -306,13 +312,16 @@ export const taskService = {
       });
     }
 
-    if (role?.slug !== "admin") {
-      andConditions.push({
-        [Op.or]: [
-          { createdBy: userId },
-          { assigneeToEmployeeId: userId },
-        ],
-      });
+    const viewCondition = buildViewPermissionCondition(
+      role,
+      "task",
+      "taskAll",
+      userId,
+      ["createdBy", "assigneeToEmployeeId"]
+    );
+
+    if (viewCondition) {
+      andConditions.push(viewCondition);
     }
 
     if (taskType) {
@@ -355,13 +364,7 @@ export const taskService = {
     };
   },
 
-  getAllTaskByEmployeeId:async()=>{
-
-  },
-
-
   getTaskBySlug: async (slug) => {
-    console.log(slug,"slugslugslugslug")
     let task;
     if (!isNaN(slug)) {
       task = await taskSchema.findByPk(slug, { include: includeOptions });
@@ -552,6 +555,46 @@ export const taskService = {
     await task.destroy();
     return true;
   },
+
+  getTeamTask: async (employeeId) => {
+
+
+    let user = await employeeSchema.findByPk(employeeId);
+    if (!user && employeeId) {
+      user = await employeeSchema.findOne({ where: { emp_id: String(employeeId) } });
+    }
+
+    if (!user) {
+      throw new ApiError(404, `Employee with ID '${employeeId}' not found`);
+    }
+
+    const teamEmployees = await employeeSchema.findAll({
+      where: {
+        manager_id: user.id,
+      },
+      attributes: ["id"],
+    });
+
+    const teamEmployeeIds = teamEmployees.map((emp) => emp.id);
+
+    if (teamEmployeeIds.length === 0) {
+      return [];
+    }
+
+    const teamTasks = await taskSchema.findAll({
+      where: {
+        assigneeToEmployeeId: {
+          [Op.in]: teamEmployeeIds,
+        },
+      },
+      include: includeOptions,
+    });
+
+    return teamTasks.map(formatAudit);
+  }
+
+
+
 };
 
 export default taskService;

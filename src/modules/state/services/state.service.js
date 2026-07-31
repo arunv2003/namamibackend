@@ -1,8 +1,10 @@
 import { stateSchema } from "../models/state.model.js";
 import { regionSchema } from "../models/region.model.js";
 import { employeeSchema } from "../../employees/models/employee.model.js";
+import { RoleSchema } from "../../roles/models/role.model.js";
 import { ApiError } from "../../../core/utils/api.Errors.js";
 import { generateSlug } from "../../../core/utils/slug.Generate.js";
+import { buildViewPermissionCondition } from "../../../core/utils/permission.utils.js";
 import { Op } from "sequelize";
 
 const defaultStateIncludes = [
@@ -68,7 +70,7 @@ export const stateService = {
     return formatStateAudit(createdState);
   },
 
-  getStates: async (queryParams) => {
+  getStates: async (queryParams, userId, roleId) => {
     const { page = 1, limit = 10, search, status } = queryParams;
 
     const parsedLimit = parseInt(limit, 10);
@@ -76,16 +78,37 @@ export const stateService = {
     const offset = (parsedPage - 1) * parsedLimit;
 
     const where = {};
+    const andConditions = [];
+
+    if (roleId) {
+      const role = await RoleSchema.findByPk(roleId);
+      const viewCondition = buildViewPermissionCondition(
+        role,
+        "location",
+        "state",
+        userId,
+        ["createdBy"]
+      );
+      if (viewCondition) {
+        andConditions.push(viewCondition);
+      }
+    }
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { slug: { [Op.like]: `%${search}%` } },
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { slug: { [Op.like]: `%${search}%` } },
+        ],
+      });
     }
 
     if (status) {
-      where.status = status;
+      andConditions.push({ status });
+    }
+
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
     }
 
     const { count, rows } = await stateSchema.findAndCountAll({

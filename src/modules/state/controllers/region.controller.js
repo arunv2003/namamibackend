@@ -15,7 +15,9 @@ export const createRegion = asyncHandler(async (req, res) => {
 });
 
 export const getRegions = asyncHandler(async (req, res) => {
-  const result = await regionService.getRegions(req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await regionService.getRegions(req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Regions retrieved successfully"));
@@ -28,7 +30,9 @@ export const getRegionBySlug = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, region, "Region retrieved successfully"));
 });
 export const getRegionByStateId = asyncHandler(async (req, res) => {
-  const result = await regionService.getRegionByStateId(req.params.stateId, req.query);
+  const userId = req.user?.id;
+  const roleId = req.user?.type || req.roleId;
+  const result = await regionService.getRegionByStateId(req.params.stateId, req.query, userId, roleId);
   return res
     .status(200)
     .json(new ApiResponse(200, result, "Region retrieved successfully"));

@@ -1,9 +1,16 @@
 import { taskTypeSchema } from "../models/task_type.model.js";
 import { employeeSchema } from "../../employees/models/employee.model.js";
+import { RoleSchema } from "../../roles/models/role.model.js";
 import { ApiError } from "../../../core/utils/api.Errors.js";
 import { generateSlug } from "../../../core/utils/slug.Generate.js";
 import { generateUniqueId } from "../../../core/utils/generateUniqueId.js";
 import { Op } from "sequelize";
+import {
+  buildViewPermissionCondition,
+  canAdd,
+  canUpdate,
+  canDelete,
+} from "../../../core/utils/permission.utils.js";
 
 const defaultIncludes = [
   {
@@ -70,7 +77,7 @@ export const taskTypeService = {
     return formatAudit(createdTaskType);
   },
 
-  getAllTaskTypes: async (queryParams = {}) => {
+  getAllTaskTypes: async (queryParams = {}, userId, roleId) => {
     const { page = 1, limit = 10, search } = queryParams;
 
     const parsedLimit = parseInt(limit, 10);
@@ -78,12 +85,33 @@ export const taskTypeService = {
     const offset = (parsedPage - 1) * parsedLimit;
 
     const where = {};
+    const andConditions = [];
+
+    if (roleId) {
+      const role = await RoleSchema.findByPk(roleId);
+      const viewCondition = buildViewPermissionCondition(
+        role,
+        "tasktype",
+        null,
+        userId,
+        ["createdBy"]
+      );
+      if (viewCondition) {
+        andConditions.push(viewCondition);
+      }
+    }
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { slug: { [Op.like]: `%${search}%` } },
-      ];
+      andConditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { slug: { [Op.like]: `%${search}%` } },
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      where[Op.and] = andConditions;
     }
 
     const { count, rows } = await taskTypeSchema.findAndCountAll({
