@@ -78,6 +78,18 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/upload', express.static(uploadsDir));
 app.use(express.static(uploadsDir));
 
+// Fallback handler for missing static upload files (e.g. after Render restart)
+app.use(['/uploads', '/upload'], (req, res) => {
+  const svgPlaceholder = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+    <rect width="128" height="128" fill="#e2e8f0" rx="64"/>
+    <circle cx="64" cy="50" r="24" fill="#94a3b8"/>
+    <path d="M28,108 C28,82 44,70 64,70 C84,70 100,82 100,108 Z" fill="#94a3b8"/>
+  </svg>`;
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  return res.status(200).send(svgPlaceholder);
+});
+
 app.use('/api/v1', apiRouter);
 
 app.get('/', (req, res) => {
