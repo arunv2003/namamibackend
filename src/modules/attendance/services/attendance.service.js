@@ -20,12 +20,14 @@ const defaultIncludes = [
   },
 ];
 
-const getTodayDateString = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+const getTodayDateString = (timeZone = process.env.APP_TIMEZONE || "Asia/Kolkata") => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return formatter.format(new Date());
 };
 
 export const calculateAttendanceStatus = (totalHours) => {

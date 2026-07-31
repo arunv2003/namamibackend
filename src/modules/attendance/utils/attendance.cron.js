@@ -1,34 +1,37 @@
+import cron from "node-cron";
 import attendanceService from "../services/attendance.service.js";
 
-let intervalId = null;
+let cronTask = null;
 
 export const initAttendanceCron = () => {
-  if (intervalId) return;
+  if (cronTask) return;
 
-  console.log("⏰ [ATTENDANCE CRON] Initialized daily absentee auto-mark background job.");
+  const appTimezone = process.env.APP_TIMEZONE || "Asia/Kolkata";
+  console.log(`⏰ [ATTENDANCE CRON] Initialized daily absentee & unclosed punch auto-mark job for timezone: ${appTimezone}`);
 
-  // Check every 15 minutes if it is end of day (23:45 - 23:59)
-  intervalId = setInterval(async () => {
-    try {
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-
-      // Trigger auto-absent & half-day marking between 23:45 and 23:59
-      if (hours === 23 && minutes >= 45) {
+  // Schedule to run every day at 23:59 (11:59 PM) in target timezone
+  cronTask = cron.schedule(
+    "59 23 * * *",
+    async () => {
+      try {
         console.log("⏰ [ATTENDANCE CRON] Running daily absentee & unclosed punch auto-marking task...");
         const result = await attendanceService.markDailyAbsentees();
         console.log("⏰ [ATTENDANCE CRON] Result:", result.message);
+      } catch (err) {
+        console.error("❌ [ATTENDANCE CRON] Error in attendance auto-marking cron job:", err.message);
       }
-    } catch (err) {
-      console.error("❌ [ATTENDANCE CRON] Error in attendance auto-marking cron job:", err.message);
+    },
+    {
+      scheduled: true,
+      timezone: appTimezone,
     }
-  }, 15 * 60 * 1000);
+  );
 };
 
 export const stopAttendanceCron = () => {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
+  if (cronTask) {
+    cronTask.stop();
+    cronTask = null;
+    console.log("⏰ [ATTENDANCE CRON] Attendance cron job stopped.");
   }
 };
