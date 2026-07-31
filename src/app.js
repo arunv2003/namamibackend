@@ -45,7 +45,7 @@ const corsOptions = {
       return callback(null, true);
     }
     console.warn(`[CORS Blocked] Origin not allowed: ${origin}`);
-    return callback(null, false);
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -61,6 +61,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Preflight OPTIONS requests handle karega
+app.options(/.*/, cors(corsOptions));
+// Agar Express 4 use kar rahe ho to app.options('*', cors(corsOptions)); bhi use kar sakte ho.
+
 
 app.use(globalLimiter);
 app.use(express.json({ limit: '50mb' }));
