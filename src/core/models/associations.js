@@ -9,6 +9,8 @@ import { regionSchema } from "../../modules/state/models/region.model.js";
 import { branchSchema } from "../../modules/state/models/branch.model.js";
 import { attendanceSchema } from "../../modules/attendance/models/attendance.model.js";
 import { fieldSchema } from "../../modules/fieldvisit/models/fieldvisit.model.js";
+import { leaveTypeSchema } from "../../modules/leave/models/leave.type.model.js";
+import { leaveSchema } from "../../modules/leave/models/leave.model.js";
 
 let isAssociationsSetup = false;
 
@@ -105,6 +107,17 @@ export const setupAssociations = () => {
   // 11. FieldVisit <-> Employee & Customer
   fieldSchema.belongsTo(customerSchema, { foreignKey: "customerId", as: "customer", constraints: false });
   customerSchema.hasMany(fieldSchema, { foreignKey: "customerId", as: "fieldVisits", constraints: false });
+
+  // 12. LeaveType Audit Trail
+  leaveTypeSchema.belongsTo(employeeSchema, { foreignKey: "createdBy", as: "creator", constraints: false });
+  leaveTypeSchema.belongsTo(employeeSchema, { foreignKey: "updatedBy", as: "updater", constraints: false });
+
+  // 13. Leave <-> Employee, LeaveType & ActionBy
+  leaveSchema.belongsTo(employeeSchema, { foreignKey: "emp_id", as: "employee", constraints: false });
+  employeeSchema.hasMany(leaveSchema, { foreignKey: "emp_id", as: "leaves", constraints: false });
+  leaveSchema.belongsTo(leaveTypeSchema, { foreignKey: "leave_type_id", as: "leaveType", constraints: false });
+  leaveTypeSchema.hasMany(leaveSchema, { foreignKey: "leave_type_id", as: "leaves", constraints: false });
+  leaveSchema.belongsTo(employeeSchema, { foreignKey: "actionBy", as: "actionByEmployee", constraints: false });
 };
 
 // Auto-initialize associations on module import
@@ -122,4 +135,7 @@ export {
   branchSchema,
   attendanceSchema,
   fieldSchema,
+  leaveTypeSchema,
+  leaveSchema,
 };
+

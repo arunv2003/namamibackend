@@ -8,6 +8,7 @@ import { stateSchema } from "../../modules/state/models/state.model.js";
 import { regionSchema } from "../../modules/state/models/region.model.js";
 import { branchSchema } from "../../modules/state/models/branch.model.js";
 import { attendanceSchema } from "../../modules/attendance/models/attendance.model.js";
+import { leaveTypeSchema } from "../../modules/leave/models/leave.type.model.js";
 import { setupAssociations } from "./associations.js";
 
 // Ensure associations are initialized as soon as models are imported
@@ -24,5 +25,6 @@ export {
   regionSchema,
   branchSchema,
   attendanceSchema,
+  leaveTypeSchema,
   setupAssociations,
 };

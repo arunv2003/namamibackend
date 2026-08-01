@@ -12,6 +12,8 @@ import branchRouter from './modules/state/routes/branch.routes.js';
 import fieldVisitRouter from './modules/fieldvisit/routes/fieldvisit.routes.js';
 import attendanceRouter from './modules/attendance/routes/attendance.routes.js';
 import uploadRouter from './modules/upload/routes/upload.routes.js';
+import leaveTypeRouter from './modules/leave/routes/leave.route.type.js';
+import leaveRouter from './modules/leave/routes/leave.route.js';
 
 const router = express.Router();
 
@@ -28,5 +30,7 @@ router.use('/regions', regionRouter);
 router.use('/branches', branchRouter);
 router.use('/field-visits', fieldVisitRouter);
 router.use('/attendance', attendanceRouter);
+router.use('/leave-types', leaveTypeRouter);
+router.use('/leaves', leaveRouter);
 
 export default router;
