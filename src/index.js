@@ -22,6 +22,17 @@ const startServer = async () => {
         `Server running in ${process.env.NODE_ENV || 'development'} mode on http://${HOST}:${PORT}`
       );
       console.log('🚀 [SERVER STARTED WITHOUT CACHING]');
+
+      // Render Auto Keep-Alive (Prevents 15-min spin-down / Cold Starts)
+      const keepAliveUrl = process.env.RENDER_EXTERNAL_URL || process.env.BACKEND_URL;
+      if (keepAliveUrl) {
+        console.log(`📡 [Keep-Alive Ping] Active for: ${keepAliveUrl}/health`);
+        setInterval(() => {
+          fetch(`${keepAliveUrl.replace(/\/$/, '')}/health`)
+            .then((res) => console.log(`[Keep-Alive Ping] Pulse OK (${res.status})`))
+            .catch((err) => console.warn(`[Keep-Alive Ping] Warning: ${err.message}`));
+        }, 10 * 60 * 1000);
+      }
     });
 
     const io = initSocketServer(server);
