@@ -6,10 +6,11 @@ import { ApiError } from '../utils/api.Errors.js';
 export const errorHandler = (err, req, res, next) => {
   let error = err;
 
-  // Always log the error details in the console for server admins (with timestamp)
-  console.error(`[ERROR] [${new Date().toISOString()}] Name: ${err.name || 'Error'}, Message: ${err.message}`);
-  if (process.env.NODE_ENV !== 'production' && err.stack) {
-    console.error(err.stack);
+  // Always log detailed error information (Method, URL, Timestamp, Stack) for server logs
+  const reqInfo = `${req.method} ${req.originalUrl || req.url}`;
+  console.error(`[ERROR] [${new Date().toISOString()}] ${reqInfo} - Name: ${err.name || 'Error'}, Message: ${err.message}`);
+  if (err.stack) {
+    console.error(`[STACK TRACE]\n${err.stack}`);
   }
 
   // 1. Zod Validation Error

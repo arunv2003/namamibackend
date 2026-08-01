@@ -71,16 +71,22 @@ const gracefulShutdown = async (signal) => {
   }, 10000);
 };
 
-process.on('uncaughtException', async (error) => {
-  console.error(`CRITICAL UNCAUGHT EXCEPTION: ${error.message}`);
-  console.error(error.stack);
-  await gracefulShutdown('UNCAUGHT_EXCEPTION');
+process.on('uncaughtException', (error) => {
+  console.error(`[CRITICAL UNCAUGHT EXCEPTION] [${new Date().toISOString()}]: ${error.message}`);
+  if (error.stack) console.error(error.stack);
+  // Uncaught exceptions indicate unstable state; shutdown gracefully after short delay
+  setTimeout(() => gracefulShutdown('UNCAUGHT_EXCEPTION'), 1000);
 });
 
-process.on('unhandledRejection', async (reason, promise) => {
-  console.error('CRITICAL UNHANDLED REJECTION at:', promise);
-  console.error('Reason:', reason);
-  await gracefulShutdown('UNHANDLED_REJECTION');
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(`[CRITICAL UNHANDLED REJECTION] [${new Date().toISOString()}]`);
+  console.error('Promise:', promise);
+  if (reason && reason.stack) {
+    console.error('Reason Stack:', reason.stack);
+  } else {
+    console.error('Reason:', reason);
+  }
+  // Log thoroughly without shutting down the whole process for background promise rejections
 });
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
