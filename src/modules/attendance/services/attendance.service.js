@@ -500,9 +500,18 @@ export const attendanceService = {
           : `${record.remarks} | Auto-marked HALF_DAY (No punch-out recorded)`
         : "Auto-marked HALF_DAY (No punch-out recorded)";
 
+      const autoClockOutTime = new Date(`${dateStr}T23:59:59`);
+      const clockInTime = record.clock_in ? new Date(record.clock_in) : null;
+      let totalHours = null;
+      if (clockInTime && !isNaN(clockInTime.getTime())) {
+        const diffMs = Math.max(0, autoClockOutTime - clockInTime);
+        totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+      }
+
       await record.update({
         status: "HALF_DAY",
-        clock_out: null,
+        clock_out: autoClockOutTime,
+        total_hours: totalHours,
         remarks: updatedRemarks,
       });
       halfDayCount++;

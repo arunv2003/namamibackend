@@ -79,6 +79,13 @@ export const getModulePermissions = (role, moduleName, subModuleName) => {
       if (permissions[key] && typeof permissions[key] === "object") {
         if (permissions[key][subModuleName]) return permissions[key][subModuleName];
         if (permissions[key][lowerSub]) return permissions[key][lowerSub];
+
+        for (const subKey of Object.keys(permissions[key])) {
+          if (permissions[key][subKey] && typeof permissions[key][subKey] === "object") {
+            if (permissions[key][subKey][subModuleName]) return permissions[key][subKey][subModuleName];
+            if (permissions[key][subKey][lowerSub]) return permissions[key][subKey][lowerSub];
+          }
+        }
       }
     }
   }

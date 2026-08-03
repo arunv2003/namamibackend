@@ -12,11 +12,11 @@ import { checkPermission } from "../../../core/utils/permission.utils.js";
 const router = express.Router();
 
 // Define office module routes
-router.route("/create").post(authMiddleware, checkPermission("location", "branch", "add"), createOffice);
-router.route("/get-all").get(authMiddleware, checkPermission("location", "branch", "get"), getOffices);
+router.route("/create").post(authMiddleware, checkPermission("admin", "department", "add"), createOffice);
+router.route("/get-all").get(authMiddleware, checkPermission("admin", "department", "get"), getOffices);
 
-router.route("/get/:slug").get(authMiddleware, checkPermission("location", "branch", "get"), getOfficeBySlug);
-router.route("/update/:slug").put(authMiddleware, checkPermission("location", "branch", "edit"), updateOffice);
-router.route("/delete/:slug").delete(authMiddleware, checkPermission("location", "branch", "delete"), deleteOffice);
+router.route("/get/:slug").get(authMiddleware, checkPermission("admin", "department", "get"), getOfficeBySlug);
+router.route("/update/:slug").put(authMiddleware, checkPermission("admin", "department", "edit"), updateOffice);
+router.route("/delete/:slug").delete(authMiddleware, checkPermission("admin", "department", "delete"), deleteOffice);
 
 export default router;

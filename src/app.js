@@ -5,9 +5,8 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
-
 import { errorHandler } from './core/middleware/error.js';
-import { globalLimiter, sanitizeRequests } from './core/middleware/security.js';
+import { sanitizeRequests } from './core/middleware/security.js';
 import { ApiError } from './core/utils/api.Errors.js';
 
 import apiRouter from './routes.js';
@@ -67,7 +66,8 @@ app.options(/.*/, cors(corsOptions));
 // Agar Express 4 use kar rahe ho to app.options('*', cors(corsOptions)); bhi use kar sakte ho.
 
 
-app.use(globalLimiter);
+//app.use(globalLimiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());

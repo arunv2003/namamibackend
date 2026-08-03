@@ -1,9 +1,9 @@
+import { DataTypes } from "sequelize";
 import { sequelize } from "../../../core/config/db.js";
-import DataTypes from "sequelize";
 import { generateSlug } from "../../../core/utils/slug.Generate.js";
 
-export const leaveTypeSchema = sequelize.define(
-  "leave_types",
+export const holidaySchema = sequelize.define(
+  "holidays",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -15,35 +15,28 @@ export const leaveTypeSchema = sequelize.define(
       type: DataTypes.STRING(200),
       allowNull: false,
     },
-    type: {
-      type: DataTypes.ENUM("paid", "unpaid"),
-      allowNull: false,
-    },
-
-    lopdeduction: {
+    flexible: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    leaveProfile: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [],
     },
     slug: {
       type: DataTypes.STRING(200),
       unique: true,
       allowNull: false,
-    },
-    code: {
-      type: DataTypes.STRING(50),
-      unique: true,
-      allowNull: false,
-    },
-    leaveprofile: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      defaultValue: null,
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      defaultValue: null,
     },
     createdBy: {
       type: DataTypes.INTEGER,
@@ -65,6 +58,3 @@ export const leaveTypeSchema = sequelize.define(
     },
   }
 );
-
-export const leaveType = leaveTypeSchema;
-

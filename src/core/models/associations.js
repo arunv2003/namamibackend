@@ -11,6 +11,9 @@ import { attendanceSchema } from "../../modules/attendance/models/attendance.mod
 import { fieldSchema } from "../../modules/fieldvisit/models/fieldvisit.model.js";
 import { leaveTypeSchema } from "../../modules/leave/models/leave.type.model.js";
 import { leaveSchema } from "../../modules/leave/models/leave.model.js";
+import { leaveProfileSchema } from "../../modules/leave/models/leaveProfile.model.js";
+import { holidaySchema } from "../../modules/leave/models/holidays.model.js";
+import { nonWorkingDaySchema } from "../../modules/leave/models/nonworkingday.model.js";
 
 let isAssociationsSetup = false;
 
@@ -118,6 +121,18 @@ export const setupAssociations = () => {
   leaveSchema.belongsTo(leaveTypeSchema, { foreignKey: "leave_type_id", as: "leaveType", constraints: false });
   leaveTypeSchema.hasMany(leaveSchema, { foreignKey: "leave_type_id", as: "leaves", constraints: false });
   leaveSchema.belongsTo(employeeSchema, { foreignKey: "actionBy", as: "actionByEmployee", constraints: false });
+
+  // 14. LeaveProfile Audit Trail
+  leaveProfileSchema.belongsTo(employeeSchema, { foreignKey: "createdBy", as: "creator", constraints: false });
+  leaveProfileSchema.belongsTo(employeeSchema, { foreignKey: "updatedBy", as: "updater", constraints: false });
+
+  // 15. Holiday Audit Trail
+  holidaySchema.belongsTo(employeeSchema, { foreignKey: "createdBy", as: "creator", constraints: false });
+  holidaySchema.belongsTo(employeeSchema, { foreignKey: "updatedBy", as: "updater", constraints: false });
+
+  // 16. NonWorkingDay Audit Trail
+  nonWorkingDaySchema.belongsTo(employeeSchema, { foreignKey: "createdBy", as: "creator", constraints: false });
+  nonWorkingDaySchema.belongsTo(employeeSchema, { foreignKey: "updatedBy", as: "updater", constraints: false });
 };
 
 // Auto-initialize associations on module import
@@ -137,5 +152,8 @@ export {
   fieldSchema,
   leaveTypeSchema,
   leaveSchema,
+  leaveProfileSchema,
+  holidaySchema,
+  nonWorkingDaySchema,
 };
 

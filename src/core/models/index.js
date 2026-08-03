@@ -9,6 +9,10 @@ import { regionSchema } from "../../modules/state/models/region.model.js";
 import { branchSchema } from "../../modules/state/models/branch.model.js";
 import { attendanceSchema } from "../../modules/attendance/models/attendance.model.js";
 import { leaveTypeSchema } from "../../modules/leave/models/leave.type.model.js";
+import { leaveSchema } from "../../modules/leave/models/leave.model.js";
+import { leaveProfileSchema } from "../../modules/leave/models/leaveProfile.model.js";
+import { holidaySchema } from "../../modules/leave/models/holidays.model.js";
+import { nonWorkingDaySchema } from "../../modules/leave/models/nonworkingday.model.js";
 import { setupAssociations } from "./associations.js";
 
 // Ensure associations are initialized as soon as models are imported
@@ -26,5 +30,9 @@ export {
   branchSchema,
   attendanceSchema,
   leaveTypeSchema,
+  leaveSchema,
+  leaveProfileSchema,
+  holidaySchema,
+  nonWorkingDaySchema,
   setupAssociations,
 };

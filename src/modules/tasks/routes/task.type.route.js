@@ -11,10 +11,10 @@ import { checkPermission } from "../../../core/utils/permission.utils.js";
 
 const router = express.Router();
 
-router.route("/create").post(authMiddleware, checkPermission("tasktype", "add"), createTaskType);
-router.route("/get-all").get(authMiddleware, checkPermission("tasktype", "get"), getAllTaskTypes);
-router.route("/get/:slug").get(authMiddleware, checkPermission("tasktype", "get"), getTaskTypeBySlug);
-router.route("/update/:slug").put(authMiddleware, checkPermission("tasktype", "edit"), updateTaskType);
-router.route("/delete/:slug").delete(authMiddleware, checkPermission("tasktype", "delete"), deleteTaskType);
+router.route("/create").post(authMiddleware, checkPermission("admin", "tasktype", "add"), createTaskType);
+router.route("/get-all").get(authMiddleware, checkPermission("admin", "tasktype", "get"), getAllTaskTypes);
+router.route("/get/:slug").get(authMiddleware, checkPermission("admin", "tasktype", "get"), getTaskTypeBySlug);
+router.route("/update/:slug").put(authMiddleware, checkPermission("admin", "tasktype", "edit"), updateTaskType);
+router.route("/delete/:slug").delete(authMiddleware, checkPermission("admin", "tasktype", "delete"), deleteTaskType);
 
 export default router;

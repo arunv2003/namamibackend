@@ -39,6 +39,29 @@ export const authLimiter = rateLimit({
   },
 });
 
+/**
+ * Per-Route Rate Limiter Factory
+ * @param {number} maxRequests - Max requests allowed per window
+ * @param {number} windowMinutes - Time window in minutes
+ * @param {string} routeName - Route name for error message
+ */
+export const createRouteLimiter = (maxRequests, windowMinutes = 1, routeName = 'this endpoint') =>
+  rateLimit({
+    windowMs: windowMinutes * 60 * 1000,
+    max: maxRequests,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.method === 'OPTIONS',
+    handler: (req, res) => {
+      return res.status(429).json({
+        statusCode: 429,
+        success: false,
+        data: null,
+        message: `Too many requests to ${routeName}. Please wait ${windowMinutes} minute(s) and try again.`,
+      });
+    },
+  });
+
 
 
 /**

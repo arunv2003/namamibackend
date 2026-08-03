@@ -38,6 +38,7 @@ const startServer = async () => {
     const io = initSocketServer(server);
     io.on('connection', (socket) => {
       handleFieldVisitSockets(io, socket);
+      console.log(`🔌 [SOCKET CONNECTED] Client ID: ${socket.id}${socket.emp_id ? ` (Employee ID: ${socket.emp_id})` : ''}`);
     });
   } catch (error) {
     console.error('Server startup failed:', error.message);
